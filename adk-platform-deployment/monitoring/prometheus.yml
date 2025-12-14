@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'adk-backend'
+    static_configs:
+      - targets: ['backend:8000']
+    metrics_path: '/metrics'
+    
+  - job_name: 'adk-frontend'
+    static_configs:
+      - targets: ['frontend:80']

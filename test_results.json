@@ -1,0 +1,114 @@
+{
+  "summary": {
+    "total": 13,
+    "passed": 3,
+    "failed": 10,
+    "success_rate": 23.076923076923077
+  },
+  "tests": [
+    {
+      "test": "Backend Module Imports",
+      "success": false,
+      "message": "Import error: No module named 'uvicorn'",
+      "duration": 0.0035965442657470703,
+      "timestamp": "2025-12-14T12:50:49.073005"
+    },
+    {
+      "test": "SvelteKit Frontend Files",
+      "success": true,
+      "message": "All 15 required files present",
+      "duration": 0.002382516860961914,
+      "timestamp": "2025-12-14T12:50:49.075441"
+    },
+    {
+      "test": "Component Completeness",
+      "success": true,
+      "message": "All 7 components present",
+      "duration": 0.0006289482116699219,
+      "timestamp": "2025-12-14T12:50:49.076076"
+    },
+    {
+      "test": "SvelteKit Pages",
+      "success": true,
+      "message": "All required pages present: 9 pages",
+      "duration": 0.00010991096496582031,
+      "timestamp": "2025-12-14T12:50:49.076190"
+    },
+    {
+      "test": "API Health Check",
+      "success": false,
+      "message": "Connection failed: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /health (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [Errno 111] Connection refused\"))",
+      "duration": 0,
+      "timestamp": "2025-12-14T12:50:49.077667"
+    },
+    {
+      "test": "Models API",
+      "success": false,
+      "message": "Connection failed: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /models (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [Errno 111] Connection refused\"))",
+      "duration": 0,
+      "timestamp": "2025-12-14T12:50:49.078404"
+    },
+    {
+      "test": "Agents API",
+      "success": false,
+      "message": "Connection failed: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /agents (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [Errno 111] Connection refused\"))",
+      "duration": 0,
+      "timestamp": "2025-12-14T12:50:49.078966"
+    },
+    {
+      "test": "Workflows API",
+      "success": false,
+      "message": "Connection failed: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /workflows (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [Errno 111] Connection refused\"))",
+      "duration": 0,
+      "timestamp": "2025-12-14T12:50:49.079536"
+    },
+    {
+      "test": "Metrics API",
+      "success": false,
+      "message": "Connection failed: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /metrics (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [Errno 111] Connection refused\"))",
+      "duration": 0.004160165786743164,
+      "timestamp": "2025-12-14T12:50:49.080350"
+    },
+    {
+      "test": "Workflow Functionality",
+      "success": false,
+      "message": "API error: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /workflows (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [Errno 111] Connection refused\"))",
+      "duration": 0.0006084442138671875,
+      "timestamp": "2025-12-14T12:50:49.080971"
+    },
+    {
+      "test": "Model Operations",
+      "success": false,
+      "message": "API error: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /models (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [Errno 111] Connection refused\"))",
+      "duration": 0.0005848407745361328,
+      "timestamp": "2025-12-14T12:50:49.081559"
+    },
+    {
+      "test": "Agent Operations",
+      "success": false,
+      "message": "API error: HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: /agents (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=8000): Failed to establish a new connection: [Errno 111] Connection refused\"))",
+      "duration": 0.0005450248718261719,
+      "timestamp": "2025-12-14T12:50:49.082107"
+    },
+    {
+      "test": "Deployment Structure",
+      "success": false,
+      "message": "Missing items: docker/docker-compose.yml",
+      "duration": 0.013338565826416016,
+      "timestamp": "2025-12-14T12:50:49.095454"
+    }
+  ],
+  "failed_tests": [
+    "Backend Module Imports",
+    "API Health Check",
+    "Models API",
+    "Agents API",
+    "Workflows API",
+    "Metrics API",
+    "Workflow Functionality",
+    "Model Operations",
+    "Agent Operations",
+    "Deployment Structure"
+  ],
+  "timestamp": "2025-12-14T12:50:49.099356"
+}
