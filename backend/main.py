@@ -237,6 +237,372 @@ class WorkflowManager:
         """Get execution result by execution ID"""
         return self.execution_results.get(execution_id)
 
+# Plugin Management
+@dataclass
+class PluginConfig:
+    """Configuration for ADK plugins"""
+    id: str
+    name: str
+    description: str
+    category: str
+    version: str
+    author: str
+    license: str
+    status: str = "installed"  # "installed", "enabled", "disabled", "error"
+    code: str = ""
+    configuration: Dict[str, Any] = None
+    dependencies: List[str] = None
+    permissions: List[str] = None
+    installed_at: datetime = None
+    last_used: datetime = None
+    usage_count: int = 0
+    
+    def __post_init__(self):
+        if self.configuration is None:
+            self.configuration = {}
+        if self.dependencies is None:
+            self.dependencies = []
+        if self.permissions is None:
+            self.permissions = []
+        if self.installed_at is None:
+            self.installed_at = datetime.now()
+
+class PluginManager:
+    """Manages ADK plugins and their lifecycle"""
+    
+    def __init__(self, model_manager: ModelManager, agent_manager: AgentManager, workflow_manager: WorkflowManager):
+        self.model_manager = model_manager
+        self.agent_manager = agent_manager
+        self.workflow_manager = workflow_manager
+        self.plugins: Dict[str, PluginConfig] = {}
+        self.plugin_registry: Dict[str, Any] = {}  # Runtime plugin instances
+        self.plugin_marketplace: List[Dict[str, Any]] = []
+        self.execution_history: List[Dict[str, Any]] = []
+        
+    def create_plugin(self, request: PluginCreateRequest) -> PluginConfig:
+        """Create a new plugin"""
+        try:
+            plugin_config = PluginConfig(
+                id=str(uuid.uuid4()),
+                name=request.name,
+                description=request.description,
+                category=request.category,
+                version=request.version,
+                author=request.author,
+                license=request.license,
+                code=request.code,
+                configuration=request.configuration,
+                dependencies=request.dependencies,
+                status="development"
+            )
+            
+            self.plugins[plugin_config.id] = plugin_config
+            
+            logger.info(f"Created plugin: {plugin_config.name}", 
+                       plugin_id=plugin_config.id, 
+                       category=plugin_config.category)
+            
+            return plugin_config
+            
+        except Exception as e:
+            logger.error(f"Failed to create plugin: {e}")
+            raise HTTPException(status_code=400, detail=str(e))
+    
+    def install_plugin(self, plugin_data: Dict[str, Any]) -> PluginConfig:
+        """Install a plugin from data"""
+        try:
+            plugin_config = PluginConfig(
+                id=str(uuid.uuid4()),
+                name=plugin_data.get("name"),
+                description=plugin_data.get("description"),
+                category=plugin_data.get("category"),
+                version=plugin_data.get("version", "1.0.0"),
+                author=plugin_data.get("author"),
+                license=plugin_data.get("license", "MIT"),
+                code=plugin_data.get("code", ""),
+                configuration=plugin_data.get("configuration", {}),
+                dependencies=plugin_data.get("dependencies", []),
+                status="installed"
+            )
+            
+            self.plugins[plugin_config.id] = plugin_config
+            
+            logger.info(f"Installed plugin: {plugin_config.name}", 
+                       plugin_id=plugin_config.id)
+            
+            return plugin_config
+            
+        except Exception as e:
+            logger.error(f"Failed to install plugin: {e}")
+            raise HTTPException(status_code=400, detail=str(e))
+    
+    def list_plugins(self, category: Optional[str] = None, status: Optional[str] = None) -> List[Dict[str, Any]]:
+        """List all plugins with optional filtering"""
+        plugins = list(self.plugins.values())
+        
+        if category:
+            plugins = [p for p in plugins if p.category == category]
+        if status:
+            plugins = [p for p in plugins if p.status == status]
+            
+        return [asdict(plugin) for plugin in plugins]
+    
+    def get_plugin(self, plugin_id: str) -> Optional[PluginConfig]:
+        """Get plugin by ID"""
+        return self.plugins.get(plugin_id)
+    
+    def update_plugin(self, plugin_id: str, updates: Dict[str, Any]) -> PluginConfig:
+        """Update plugin configuration"""
+        plugin = self.get_plugin(plugin_id)
+        if not plugin:
+            raise HTTPException(status_code=404, detail="Plugin not found")
+        
+        for key, value in updates.items():
+            if hasattr(plugin, key):
+                setattr(plugin, key, value)
+        
+        logger.info(f"Updated plugin: {plugin.name}", plugin_id=plugin_id)
+        return plugin
+    
+    def delete_plugin(self, plugin_id: str) -> bool:
+        """Delete a plugin"""
+        if plugin_id in self.plugins:
+            plugin = self.plugins[plugin_id]
+            # Remove from registry if exists
+            if plugin_id in self.plugin_registry:
+                del self.plugin_registry[plugin_id]
+            
+            del self.plugins[plugin_id]
+            logger.info(f"Deleted plugin: {plugin.name}", plugin_id=plugin_id)
+            return True
+        return False
+    
+    def enable_plugin(self, plugin_id: str) -> PluginConfig:
+        """Enable a plugin"""
+        plugin = self.get_plugin(plugin_id)
+        if not plugin:
+            raise HTTPException(status_code=404, detail="Plugin not found")
+        
+        plugin.status = "enabled"
+        plugin.last_used = datetime.now()
+        
+        # Initialize plugin instance if code exists
+        if plugin.code and plugin_id not in self.plugin_registry:
+            try:
+                self._initialize_plugin(plugin)
+            except Exception as e:
+                logger.error(f"Failed to initialize plugin {plugin.name}: {e}")
+                plugin.status = "error"
+        
+        logger.info(f"Enabled plugin: {plugin.name}", plugin_id=plugin_id)
+        return plugin
+    
+    def disable_plugin(self, plugin_id: str) -> PluginConfig:
+        """Disable a plugin"""
+        plugin = self.get_plugin(plugin_id)
+        if not plugin:
+            raise HTTPException(status_code=404, detail="Plugin not found")
+        
+        plugin.status = "disabled"
+        
+        # Remove from registry
+        if plugin_id in self.plugin_registry:
+            del self.plugin_registry[plugin_id]
+        
+        logger.info(f"Disabled plugin: {plugin.name}", plugin_id=plugin_id)
+        return plugin
+    
+    async def execute_plugin(self, plugin_id: str, method: str, parameters: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a plugin method"""
+        plugin = self.get_plugin(plugin_id)
+        if not plugin:
+            raise HTTPException(status_code=404, detail="Plugin not found")
+        
+        if plugin.status != "enabled":
+            raise HTTPException(status_code=400, detail="Plugin is not enabled")
+        
+        execution_id = str(uuid.uuid4())
+        start_time = datetime.now()
+        
+        try:
+            # Record execution start
+            execution_record = {
+                "execution_id": execution_id,
+                "plugin_id": plugin_id,
+                "method": method,
+                "parameters": parameters,
+                "context": context,
+                "status": "running",
+                "start_time": start_time
+            }
+            
+            self.execution_history.append(execution_record)
+            
+            # Execute plugin
+            if plugin_id in self.plugin_registry:
+                plugin_instance = self.plugin_registry[plugin_id]
+                result = await self._execute_plugin_method(plugin_instance, method, parameters, context)
+            else:
+                # Execute code directly if no instance
+                result = await self._execute_plugin_code(plugin, method, parameters, context)
+            
+            end_time = datetime.now()
+            execution_time = (end_time - start_time).total_seconds()
+            
+            # Update execution record
+            execution_record.update({
+                "status": "completed",
+                "end_time": end_time,
+                "execution_time": execution_time,
+                "result": result
+            })
+            
+            # Update plugin usage
+            plugin.usage_count += 1
+            plugin.last_used = end_time
+            
+            logger.info(f"Plugin execution completed: {plugin.name}.{method}", 
+                       plugin_id=plugin_id, execution_id=execution_id)
+            
+            return {
+                "execution_id": execution_id,
+                "result": result,
+                "execution_time": execution_time,
+                "status": "completed"
+            }
+            
+        except Exception as e:
+            end_time = datetime.now()
+            execution_time = (end_time - start_time).total_seconds()
+            
+            # Update execution record with error
+            execution_record.update({
+                "status": "failed",
+                "end_time": end_time,
+                "execution_time": execution_time,
+                "error": str(e)
+            })
+            
+            logger.error(f"Plugin execution failed: {plugin.name}.{method}", 
+                        plugin_id=plugin_id, error=str(e))
+            
+            raise HTTPException(status_code=500, detail=f"Plugin execution failed: {str(e)}")
+    
+    def _initialize_plugin(self, plugin: PluginConfig) -> None:
+        """Initialize a plugin instance"""
+        try:
+            # Simple plugin initialization - in a real implementation,
+            # this would use a secure sandbox and proper code execution
+            if plugin.code:
+                # Execute plugin code in a controlled environment
+                plugin_instance = {
+                    "config": plugin.configuration,
+                    "metadata": {
+                        "id": plugin.id,
+                        "name": plugin.name,
+                        "version": plugin.version
+                    }
+                }
+                self.plugin_registry[plugin.id] = plugin_instance
+                
+        except Exception as e:
+            logger.error(f"Failed to initialize plugin {plugin.name}: {e}")
+            raise
+    
+    async def _execute_plugin_method(self, plugin_instance: Dict[str, Any], method: str, parameters: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a method on plugin instance"""
+        # This is a simplified implementation
+        # In reality, this would handle proper plugin method calls
+        
+        if method == "execute":
+            return {
+                "success": True,
+                "data": f"Plugin {plugin_instance['metadata']['name']} executed with params: {parameters}",
+                "context": context
+            }
+        elif method == "configure":
+            plugin_instance["config"].update(parameters)
+            return {"success": True, "configuration": plugin_instance["config"]}
+        else:
+            raise ValueError(f"Unknown plugin method: {method}")
+    
+    async def _execute_plugin_code(self, plugin: PluginConfig, method: str, parameters: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute plugin code directly"""
+        # This is a simplified implementation
+        # In reality, this would use a secure sandbox for code execution
+        
+        if plugin.category == "workflow":
+            # Workflow plugin execution
+            return {
+                "success": True,
+                "workflow_result": f"Workflow plugin {plugin.name} executed {method}",
+                "parameters": parameters,
+                "context": context
+            }
+        elif plugin.category == "tool":
+            # Tool plugin execution
+            return {
+                "success": True,
+                "tool_result": f"Tool plugin {plugin.name} performed {method}",
+                "parameters": parameters,
+                "context": context
+            }
+        elif plugin.category == "integration":
+            # Integration plugin execution
+            return {
+                "success": True,
+                "integration_result": f"Integration plugin {plugin.name} connected to {method}",
+                "parameters": parameters,
+                "context": context
+            }
+        else:
+            # Generic plugin execution
+            return {
+                "success": True,
+                "result": f"Plugin {plugin.name} executed {method}",
+                "parameters": parameters,
+                "context": context
+            }
+    
+    def get_plugin_marketplace(self) -> List[Dict[str, Any]]:
+        """Get available plugins from marketplace"""
+        return self.plugin_marketplace
+    
+    def add_to_marketplace(self, plugin_data: Dict[str, Any]) -> None:
+        """Add plugin to marketplace"""
+        self.plugin_marketplace.append(plugin_data)
+    
+    def get_execution_history(self, plugin_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Get plugin execution history"""
+        if plugin_id:
+            return [exec_record for exec_record in self.execution_history 
+                   if exec_record["plugin_id"] == plugin_id]
+        return self.execution_history
+    
+    def validate_plugin_security(self, plugin_code: str) -> Dict[str, Any]:
+        """Validate plugin code for security issues"""
+        security_issues = []
+        
+        # Basic security checks
+        dangerous_functions = ["eval", "exec", "open", "import", "__import__"]
+        for func in dangerous_functions:
+            if func in plugin_code:
+                security_issues.append(f"Potentially dangerous function: {func}")
+        
+        # Check for file system access
+        if "file" in plugin_code.lower() or "path" in plugin_code.lower():
+            security_issues.append("File system access detected")
+        
+        # Check for network access
+        if "http" in plugin_code.lower() or "socket" in plugin_code.lower():
+            security_issues.append("Network access detected")
+        
+        return {
+            "is_safe": len(security_issues) == 0,
+            "issues": security_issues,
+            "warnings": ["Always review plugin code before installation"] if security_issues else []
+        }
+
 # Model Integration Imports
 try:
     import litellm
@@ -338,6 +704,45 @@ class WorkflowCreateRequest(BaseModel):
 class WorkflowExecutionRequest(BaseModel):
     workflow_id: str
     input_data: Dict[str, Any] = {}
+
+# Plugin Management Models
+class PluginConfig(BaseModel):
+    """Plugin configuration schema"""
+    name: str
+    version: str
+    author: str
+    description: str
+    category: str
+    license: str
+    dependencies: List[str] = []
+    configuration: Dict[str, Any] = {}
+    permissions: List[str] = []
+
+class PluginCreateRequest(BaseModel):
+    """Request to create a new plugin"""
+    name: str
+    description: str
+    category: str
+    version: str = "1.0.0"
+    author: str
+    license: str = "MIT"
+    code: str
+    configuration: Dict[str, Any] = {}
+    dependencies: List[str] = []
+    tests: List[Dict[str, Any]] = []
+
+class PluginInstallRequest(BaseModel):
+    """Request to install a plugin"""
+    plugin_url: Optional[str] = None
+    plugin_file: Optional[str] = None
+    configuration: Dict[str, Any] = {}
+
+class PluginExecutionRequest(BaseModel):
+    """Request to execute a plugin"""
+    plugin_id: str
+    method: str
+    parameters: Dict[str, Any] = {}
+    context: Dict[str, Any] = {}
 
 # Model Manager
 class ModelManager:
@@ -588,6 +993,7 @@ class AgentManager:
 model_manager = ModelManager()
 agent_manager = AgentManager(model_manager)
 workflow_manager = WorkflowManager(model_manager, agent_manager)
+plugin_manager = PluginManager(model_manager, agent_manager, workflow_manager)
 
 # Pre-configured models
 DEFAULT_MODELS = [
@@ -932,6 +1338,182 @@ async def get_workflow_status(workflow_id: str):
         "last_execution": recent_executions[-1] if recent_executions else None
     }
 
+# Plugin Management APIs
+@app.get("/plugins")
+async def list_plugins(category: Optional[str] = None, status: Optional[str] = None):
+    """List all plugins with optional filtering"""
+    try:
+        plugins = plugin_manager.list_plugins(category, status)
+        return {
+            "plugins": plugins,
+            "total": len(plugins)
+        }
+    except Exception as e:
+        logger.error(f"Error listing plugins: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/plugins")
+async def create_plugin(request: PluginCreateRequest):
+    """Create a new plugin"""
+    try:
+        # Validate plugin code security
+        security_check = plugin_manager.validate_plugin_security(request.code)
+        if not security_check["is_safe"]:
+            raise HTTPException(status_code=400, detail=f"Plugin security validation failed: {security_check['issues']}")
+        
+        plugin = plugin_manager.create_plugin(request)
+        return asdict(plugin)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating plugin: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/plugins/{plugin_id}")
+async def get_plugin(plugin_id: str):
+    """Get plugin by ID"""
+    try:
+        plugin = plugin_manager.get_plugin(plugin_id)
+        if not plugin:
+            raise HTTPException(status_code=404, detail="Plugin not found")
+        return asdict(plugin)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting plugin {plugin_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/plugins/{plugin_id}")
+async def update_plugin(plugin_id: str, updates: Dict[str, Any]):
+    """Update plugin configuration"""
+    try:
+        plugin = plugin_manager.update_plugin(plugin_id, updates)
+        return asdict(plugin)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating plugin {plugin_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/plugins/{plugin_id}")
+async def delete_plugin(plugin_id: str):
+    """Delete a plugin"""
+    try:
+        success = plugin_manager.delete_plugin(plugin_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Plugin not found")
+        return {"message": "Plugin deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting plugin {plugin_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/plugins/{plugin_id}/enable")
+async def enable_plugin(plugin_id: str):
+    """Enable a plugin"""
+    try:
+        plugin = plugin_manager.enable_plugin(plugin_id)
+        return asdict(plugin)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error enabling plugin {plugin_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/plugins/{plugin_id}/disable")
+async def disable_plugin(plugin_id: str):
+    """Disable a plugin"""
+    try:
+        plugin = plugin_manager.disable_plugin(plugin_id)
+        return asdict(plugin)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error disabling plugin {plugin_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/plugins/{plugin_id}/execute")
+async def execute_plugin(plugin_id: str, request: PluginExecutionRequest):
+    """Execute a plugin method"""
+    try:
+        result = await plugin_manager.execute_plugin(
+            plugin_id, 
+            request.method, 
+            request.parameters, 
+            request.context
+        )
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error executing plugin {plugin_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/plugins/{plugin_id}/history")
+async def get_plugin_history(plugin_id: str):
+    """Get execution history for a plugin"""
+    try:
+        history = plugin_manager.get_execution_history(plugin_id)
+        return {"history": history}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting plugin history {plugin_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/plugins/marketplace")
+async def get_plugin_marketplace():
+    """Get available plugins from marketplace"""
+    try:
+        marketplace = plugin_manager.get_plugin_marketplace()
+        return {"plugins": marketplace}
+    except Exception as e:
+        logger.error(f"Error getting marketplace: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/plugins/marketplace")
+async def add_to_marketplace(plugin_data: Dict[str, Any]):
+    """Add plugin to marketplace"""
+    try:
+        plugin_manager.add_to_marketplace(plugin_data)
+        return {"message": "Plugin added to marketplace successfully"}
+    except Exception as e:
+        logger.error(f"Error adding to marketplace: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/plugins/validate")
+async def validate_plugin_security(plugin_code: str):
+    """Validate plugin code for security issues"""
+    try:
+        validation_result = plugin_manager.validate_plugin_security(plugin_code)
+        return validation_result
+    except Exception as e:
+        logger.error(f"Error validating plugin security: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/plugins/install")
+async def install_plugin(request: PluginInstallRequest):
+    """Install a plugin from URL or file"""
+    try:
+        if request.plugin_url:
+            # Download and install from URL
+            # This would implement actual HTTP download
+            plugin_data = {"name": "Plugin from URL", "description": "Downloaded plugin"}
+        elif request.plugin_file:
+            # Install from file content
+            plugin_data = {"name": "Plugin from file", "description": "File-based plugin"}
+        else:
+            raise HTTPException(status_code=400, detail="Either plugin_url or plugin_file must be provided")
+        
+        plugin = plugin_manager.install_plugin(plugin_data)
+        return asdict(plugin)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error installing plugin: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Performance monitoring
 @app.get("/metrics")
 async def get_metrics():
@@ -946,6 +1528,12 @@ async def get_metrics():
             "total": len(workflow_manager.workflows),
             "active": len([w for w in workflow_manager.workflows.values() if w.status == "active"]),
             "total_executions": sum(len(w.execution_history) for w in workflow_manager.workflows.values())
+        },
+        "plugins": {
+            "total": len(plugin_manager.plugins),
+            "enabled": len([p for p in plugin_manager.plugins.values() if p.status == "enabled"]),
+            "total_executions": len(plugin_manager.execution_history),
+            "marketplace": len(plugin_manager.plugin_marketplace)
         },
         "system": {
             "cpu_percent": psutil.cpu_percent(),
