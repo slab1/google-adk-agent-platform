@@ -41,6 +41,7 @@
     Copy,
     Archive
   } from 'lucide-svelte';
+  import { Brain } from 'lucide-svelte';
 
   let searchQuery = $state('');
   let selectedCategory = $state('all');
@@ -72,6 +73,7 @@
     { value: 'all', label: 'All Plugins', icon: Puzzle },
     { value: 'workflow', label: 'Workflow Nodes', icon: GitBranch },
     { value: 'model', label: 'AI Models', icon: Cpu },
+    { value: 'integral-ai', label: 'Integral AI Models', icon: Brain },
     { value: 'tool', label: 'Tools', icon: Zap },
     { value: 'integration', label: 'Integrations', icon: Globe },
     { value: 'analytics', label: 'Analytics', icon: BarChart3 },
@@ -220,6 +222,149 @@
       screenshots: ['code-gen.png', 'languages.png'],
       compatibility: ['v2.1.0+'],
       lastUpdated: '2025-12-11'
+    },
+    {
+      id: 'integral-ai-core',
+      name: 'Integral AI Core',
+      description: 'Autonomous skill learning AI that mimics human neocortex with Universal Simulators and Universal Operators',
+      category: 'model',
+      version: '3.0.0',
+      author: 'Integral AI Team',
+      rating: 4.9,
+      downloads: 3400,
+      price: '$99/month',
+      tags: ['ai', 'autonomous-learning', 'neocortex', 'skill-learning', 'energy-efficient'],
+      features: [
+        'Autonomous Skill Learning without human intervention',
+        'Safe and Reliable Mastery with catastrophic failure protection',
+        'Energy Efficiency comparable to human brain',
+        'Universal Simulators for world model creation',
+        'Universal Operators for agency layer control',
+        'Genesis & Stream infrastructure for real-time learning',
+        'Vision, audio, and sensor data integration',
+        'Neocortex simulation with cortical layer modeling'
+      ],
+      screenshots: ['integral-ai-architecture.png', 'learning-curves.png'],
+      compatibility: ['v2.0.0+'],
+      lastUpdated: '2025-12-15',
+      integralAICapabilities: {
+        autonomousSkillLearning: {
+          id: 'asl-001',
+          name: 'Autonomous Skill Learning',
+          description: 'Learns new skills without human intervention',
+          learningRate: 95,
+          successRate: 98,
+          interventionRequired: false
+        },
+        safeReliableMastery: {
+          id: 'srm-001',
+          name: 'Safe and Reliable Mastery',
+          description: 'Learns without catastrophic failures',
+          failureRate: 0.02, // 2% failure rate
+          safetyConstraints: 12,
+          catastrophicFailures: 0
+        },
+        energyEfficiency: {
+          id: 'ee-001',
+          name: 'Energy Efficiency',
+          description: 'Uses energy comparable to human brain',
+          energyConsumption: 20, // watts (similar to human brain)
+          efficiencyRatio: 1.02, // 2% above human brain efficiency
+          optimization: 'bio-inspired'
+        },
+        universalSimulators: [
+          {
+            id: 'vision-sim-001',
+            name: 'Vision World Model',
+            type: 'multimodal',
+            capabilities: ['object_recognition', 'scene_understanding', 'temporal_prediction'],
+            learningRate: 0.85
+          },
+          {
+            id: 'audio-sim-001',
+            name: 'Audio World Model',
+            type: 'multimodal',
+            capabilities: ['speech_recognition', 'sound_localization', 'music_understanding'],
+            learningRate: 0.82
+          },
+          {
+            id: 'sensor-sim-001',
+            name: 'Sensor World Model',
+            type: 'multimodal',
+            capabilities: ['proprioception', 'tactile_sensing', 'spatial_awareness'],
+            learningRate: 0.88
+          }
+        ],
+        universalOperators: [
+          {
+            id: 'plan-op-001',
+            name: 'Planning Operator',
+            layer: 'planning',
+            capabilities: ['goal_formation', 'strategy_development', 'resource_allocation'],
+            autonomousLearning: true
+          },
+          {
+            id: 'exec-op-001',
+            name: 'Execution Operator',
+            layer: 'execution',
+            capabilities: ['action_selection', 'motor_control', 'real_time_adaptation'],
+            autonomousLearning: true
+          },
+          {
+            id: 'mon-op-001',
+            name: 'Monitoring Operator',
+            layer: 'monitoring',
+            capabilities: ['state_estimation', 'error_detection', 'performance_tracking'],
+            autonomousLearning: true
+          }
+        ],
+        genesisStreamInfrastructure: {
+          genesis: {
+            id: 'gen-001',
+            name: 'Genesis Component',
+            type: 'initialization',
+            neocortexSimulation: true,
+            corticalLayerModeling: true,
+            synapticPlasticity: true
+          },
+          stream: {
+            id: 'stream-001',
+            name: 'Stream Component',
+            type: 'real-time-learning',
+            continuousLearning: true,
+            multimodalProcessing: true,
+            energyOptimization: true
+          },
+          orchestrator: {
+            id: 'orch-001',
+            name: 'Genesis & Stream Orchestrator',
+            type: 'coordination',
+            realTimeCoordination: true,
+            resourceOptimization: true,
+            safetyMonitoring: true
+          }
+        },
+        neocortexMimicry: {
+          corticalLayers: [
+            { name: 'Input Layer', neuronCount: 1000000, plasticity: 0.9 },
+            { name: 'Association Layer', neuronCount: 500000, plasticity: 0.85 },
+            { name: 'Motor Layer', neuronCount: 100000, plasticity: 0.8 },
+            { name: 'Multimodal Layer', neuronCount: 200000, plasticity: 0.88 }
+          ],
+          synapticPlasticity: {
+            longTermPotentiation: 0.85,
+            longTermDepression: 0.75,
+            spikeTiming: 0.82,
+            metaplasticity: 0.9
+          },
+          cognitiveArchitecture: {
+            workingMemory: { capacity: 7, duration: 30, modalities: ['visual', 'auditory', 'sensorimotor'] },
+            attention: { type: 'divided', cognitiveLoad: 75, switchingCost: 50 },
+            learning: { type: 'self-supervised', autonomousSkillAcquisition: true, catastrophicFailureProtection: true },
+            decisionMaking: { type: 'hybrid', reasoningLevel: 'neuro-symbolic', explanationCapability: true }
+          }
+        }
+      }
     }
   ];
 
@@ -944,6 +1089,205 @@
                     <span class="text-body text-text-high">{feature}</span>
                   </div>
                 {/each}
+              </div>
+            </div>
+          {/if}
+
+          <!-- Integral AI Capabilities -->
+          {#if selectedPlugin.integralAICapabilities}
+            <div>
+              <h3 class="text-subheading text-text-high mb-3 flex items-center space-x-2">
+                <Brain class="w-5 h-5 text-primary-500" />
+                <span>Integral AI Capabilities</span>
+              </h3>
+              
+              <div class="space-y-4">
+                <!-- Core Principles -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {#if selectedPlugin.integralAICapabilities.autonomousSkillLearning}
+                    <div class="bg-surface-2 border border-border rounded-sharp p-4">
+                      <div class="flex items-center space-x-2 mb-2">
+                        <Zap class="w-4 h-4 text-primary-500" />
+                        <h4 class="text-small font-semibold text-text-high">Autonomous Skill Learning</h4>
+                      </div>
+                      <p class="text-small text-text-medium mb-2">Learns new skills without human intervention</p>
+                      <div class="space-y-1 text-small">
+                        <div class="flex justify-between">
+                          <span class="text-text-medium">Learning Rate:</span>
+                          <span class="text-text-high">{selectedPlugin.integralAICapabilities.autonomousSkillLearning.learningRate}%</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-text-medium">Success Rate:</span>
+                          <span class="text-text-high">{selectedPlugin.integralAICapabilities.autonomousSkillLearning.successRate}%</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-text-medium">Human Intervention:</span>
+                          <span class="text-error">{selectedPlugin.integralAICapabilities.autonomousSkillLearning.interventionRequired ? 'Required' : 'None'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  {/if}
+
+                  {#if selectedPlugin.integralAICapabilities.safeReliableMastery}
+                    <div class="bg-surface-2 border border-border rounded-sharp p-4">
+                      <div class="flex items-center space-x-2 mb-2">
+                        <Shield class="w-4 h-4 text-success" />
+                        <h4 class="text-small font-semibold text-text-high">Safe & Reliable Mastery</h4>
+                      </div>
+                      <p class="text-small text-text-medium mb-2">Learns without catastrophic failures</p>
+                      <div class="space-y-1 text-small">
+                        <div class="flex justify-between">
+                          <span class="text-text-medium">Failure Rate:</span>
+                          <span class="text-text-high">{(selectedPlugin.integralAICapabilities.safeReliableMastery.failureRate * 100).toFixed(1)}%</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-text-medium">Safety Constraints:</span>
+                          <span class="text-text-high">{selectedPlugin.integralAICapabilities.safeReliableMastery.safetyConstraints}</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-text-medium">Catastrophic Failures:</span>
+                          <span class="text-success">{selectedPlugin.integralAICapabilities.safeReliableMastery.catastrophicFailures}</span>
+                        </div>
+                      </div>
+                    </div>
+                  {/if}
+
+                  {#if selectedPlugin.integralAICapabilities.energyEfficiency}
+                    <div class="bg-surface-2 border border-border rounded-sharp p-4">
+                      <div class="flex items-center space-x-2 mb-2">
+                        <Cpu class="w-4 h-4 text-warning" />
+                        <h4 class="text-small font-semibold text-text-high">Energy Efficiency</h4>
+                      </div>
+                      <p class="text-small text-text-medium mb-2">Uses energy comparable to human brain</p>
+                      <div class="space-y-1 text-small">
+                        <div class="flex justify-between">
+                          <span class="text-text-medium">Power Consumption:</span>
+                          <span class="text-text-high">{selectedPlugin.integralAICapabilities.energyEfficiency.energyConsumption}W</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-text-medium">Efficiency Ratio:</span>
+                          <span class="text-text-high">{(selectedPlugin.integralAICapabilities.energyEfficiency.efficiencyRatio * 100).toFixed(0)}%</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-text-medium">Optimization:</span>
+                          <span class="text-text-high capitalize">{selectedPlugin.integralAICapabilities.energyEfficiency.optimization}</span>
+                        </div>
+                      </div>
+                    </div>
+                  {/if}
+                </div>
+
+                <!-- Universal Simulators -->
+                {#if selectedPlugin.integralAICapabilities.universalSimulators}
+                  <div class="bg-surface-2 border border-border rounded-sharp p-4">
+                    <h4 class="text-small font-semibold text-text-high mb-3 flex items-center space-x-2">
+                      <Globe class="w-4 h-4 text-primary-500" />
+                      <span>Universal Simulators (World Models)</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {#each selectedPlugin.integralAICapabilities.universalSimulators as simulator}
+                        <div class="bg-surface-1 border border-border rounded-sharp p-3">
+                          <h5 class="text-small font-medium text-text-high mb-1">{simulator.name}</h5>
+                          <p class="text-tiny text-text-medium capitalize mb-2">{simulator.type}</p>
+                          <div class="flex flex-wrap gap-1 mb-2">
+                            {#each simulator.capabilities as capability}
+                              <span class="px-1.5 py-0.5 bg-primary-500/20 text-primary-400 text-tiny rounded">
+                                {capability.replace('_', ' ')}
+                              </span>
+                            {/each}
+                          </div>
+                          <div class="flex justify-between text-tiny">
+                            <span class="text-text-medium">Learning Rate:</span>
+                            <span class="text-text-high">{(simulator.learningRate * 100).toFixed(0)}%</span>
+                          </div>
+                        </div>
+                      {/each}
+                    </div>
+                  </div>
+                {/if}
+
+                <!-- Universal Operators -->
+                {#if selectedPlugin.integralAICapabilities.universalOperators}
+                  <div class="bg-surface-2 border border-border rounded-sharp p-4">
+                    <h4 class="text-small font-semibold text-text-high mb-3 flex items-center space-x-2">
+                      <Bot class="w-4 h-4 text-success" />
+                      <span>Universal Operators (Agency Layer)</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {#each selectedPlugin.integralAICapabilities.universalOperators as operator}
+                        <div class="bg-surface-1 border border-border rounded-sharp p-3">
+                          <h5 class="text-small font-medium text-text-high mb-1">{operator.name}</h5>
+                          <p class="text-tiny text-text-medium capitalize mb-2">{operator.layer} Layer</p>
+                          <div class="flex flex-wrap gap-1 mb-2">
+                            {#each operator.capabilities as capability}
+                              <span class="px-1.5 py-0.5 bg-success/20 text-success text-tiny rounded">
+                                {capability.replace('_', ' ')}
+                              </span>
+                            {/each}
+                          </div>
+                          <div class="flex items-center justify-between text-tiny">
+                            <span class="text-text-medium">Autonomous:</span>
+                            <span class={operator.autonomousLearning ? 'text-success' : 'text-error'}>
+                              {operator.autonomousLearning ? 'Yes' : 'No'}
+                            </span>
+                          </div>
+                        </div>
+                      {/each}
+                    </div>
+                  </div>
+                {/if}
+
+                <!-- Neocortex Mimicry -->
+                {#if selectedPlugin.integralAICapabilities.neocortexMimicry}
+                  <div class="bg-surface-2 border border-border rounded-sharp p-4">
+                    <h4 class="text-small font-semibold text-text-high mb-3 flex items-center space-x-2">
+                      <Brain class="w-4 h-4 text-warning" />
+                      <span>Neocortex Simulation</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <!-- Cortical Layers -->
+                      <div>
+                        <h5 class="text-small font-medium text-text-high mb-2">Cortical Layers</h5>
+                        <div class="space-y-2">
+                          {#each selectedPlugin.integralAICapabilities.neocortexMimicry.corticalLayers as layer}
+                            <div class="flex justify-between items-center bg-surface-1 border border-border rounded p-2">
+                              <span class="text-small text-text-medium">{layer.name}</span>
+                              <div class="flex items-center space-x-2 text-tiny">
+                                <span class="text-text-high">{(layer.neuronCount / 1000).toFixed(0)}K</span>
+                                <span class="text-text-medium">neurons</span>
+                                <span class="text-text-high">•</span>
+                                <span class="text-text-high">{(layer.plasticity * 100).toFixed(0)}%</span>
+                              </div>
+                            </div>
+                          {/each}
+                        </div>
+                      </div>
+
+                      <!-- Synaptic Plasticity -->
+                      <div>
+                        <h5 class="text-small font-medium text-text-high mb-2">Synaptic Plasticity</h5>
+                        <div class="space-y-2">
+                          <div class="flex justify-between text-tiny">
+                            <span class="text-text-medium">LTP:</span>
+                            <span class="text-text-high">{(selectedPlugin.integralAICapabilities.neocortexMimicry.synapticPlasticity.longTermPotentiation * 100).toFixed(0)}%</span>
+                          </div>
+                          <div class="flex justify-between text-tiny">
+                            <span class="text-text-medium">LTD:</span>
+                            <span class="text-text-high">{(selectedPlugin.integralAICapabilities.neocortexMimicry.synapticPlasticity.longTermDepression * 100).toFixed(0)}%</span>
+                          </div>
+                          <div class="flex justify-between text-tiny">
+                            <span class="text-text-medium">Spike Timing:</span>
+                            <span class="text-text-high">{(selectedPlugin.integralAICapabilities.neocortexMimicry.synapticPlasticity.spikeTiming * 100).toFixed(0)}%</span>
+                          </div>
+                          <div class="flex justify-between text-tiny">
+                            <span class="text-text-medium">Metaplasticity:</span>
+                            <span class="text-text-high">{(selectedPlugin.integralAICapabilities.neocortexMimicry.synapticPlasticity.metaplasticity * 100).toFixed(0)}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {/if}
               </div>
             </div>
           {/if}

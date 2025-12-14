@@ -683,6 +683,52 @@ class ModelTestRequest(BaseModel):
     model_config: Dict[str, Any]
     test_prompt: str
 
+# Integral AI Models
+class SafetyConstraint(BaseModel):
+    type: str  # 'catastrophic-failure-prevention', 'skill-acquisition-safety', 'energy-threshold', 'learning-boundaries'
+    threshold: float
+    action: str  # 'stop', 'escalate', 'adapt', 'isolate'
+    monitoring_level: str  # 'real-time', 'periodic', 'event-driven'
+
+class EnergyProfile(BaseModel):
+    baseline_comparison: str  # 'human-brain-equivalent', 'sub-human-brain', 'efficient-bio-inspired'
+    consumption_metrics: Dict[str, float]
+    optimization_target: float
+
+class IntegralAICapability(BaseModel):
+    id: str
+    name: str
+    description: str
+    category: str  # 'autonomous-learning', 'safety-reliability', 'energy-efficiency', 'neocortex-mimicry'
+    implementation: Dict[str, bool]
+    metrics: Dict[str, float]
+    status: str  # 'experimental', 'active', 'deployed'
+
+class AutonomousLearningRequest(BaseModel):
+    skill_domain: str
+    learning_rate: float = 0.01
+    safety_constraints: List[SafetyConstraint] = []
+    multimodal_input: Dict[str, bool] = {"vision": True, "audio": True, "sensor": True}
+
+class SafetyMasteryRequest(BaseModel):
+    task_type: str
+    safety_level: str = "balanced"  # 'conservative', 'balanced', 'aggressive'
+    failure_threshold: float = 0.01
+    monitoring_enabled: bool = True
+
+class EnergyEfficiencyRequest(BaseModel):
+    baseline_comparison: str = "human-brain-equivalent"
+    optimization_target: float = 50.0
+    consumption_phases: List[str] = ["learning", "inference", "idle"]
+    real_time_monitoring: bool = True
+
+class IntegralAIMetrics(BaseModel):
+    autonomous_skill_acquisition: float
+    failure_rate: float
+    energy_efficiency: float
+    neocortex_fidelity: float
+    timestamp: datetime
+
 class WorkflowNode(BaseModel):
     id: str
     type: str
@@ -989,11 +1035,421 @@ class AgentManager:
             logger.error(f"Agent chat failed for {agent_id}: {e}")
             raise HTTPException(status_code=500, detail=str(e))
 
+# Integral AI Manager
+class IntegralAIManager:
+    """Manages Integral AI capabilities and monitoring"""
+    
+    def __init__(self):
+        self.autonomous_skills: Dict[str, Dict[str, Any]] = {}
+        self.safety_metrics: Dict[str, Dict[str, Any]] = {}
+        self.energy_profiles: Dict[str, Dict[str, Any]] = {}
+        self.capabilities: List[IntegralAICapability] = []
+        self.execution_history: List[Dict[str, Any]] = []
+        
+    def register_capability(self, capability: IntegralAICapability) -> bool:
+        """Register an Integral AI capability"""
+        try:
+            self.capabilities.append(capability)
+            logger.info(f"Registered Integral AI capability: {capability.name}", 
+                       category=capability.category)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to register capability {capability.name}: {e}")
+            return False
+    
+    async def autonomous_skill_learning(self, request: AutonomousLearningRequest) -> Dict[str, Any]:
+        """Perform autonomous skill learning"""
+        learning_id = str(uuid.uuid4())
+        start_time = datetime.now()
+        
+        try:
+            # Simulate autonomous learning process
+            learning_result = {
+                "learning_id": learning_id,
+                "skill_domain": request.skill_domain,
+                "learning_rate": request.learning_rate,
+                "status": "learning",
+                "progress": 0.0,
+                "skills_acquired": [],
+                "safety_compliance": True,
+                "energy_consumption": 0.0
+            }
+            
+            # Simulate learning phases
+            for phase in range(10):
+                learning_result["progress"] = (phase + 1) * 10.0
+                learning_result["skills_acquired"].append(f"sub_skill_{phase+1}")
+                await asyncio.sleep(0.1)  # Simulate learning time
+            
+            learning_result["status"] = "completed"
+            learning_result["skills_acquired"].append(f"master_{request.skill_domain}")
+            
+            end_time = datetime.now()
+            execution_time = (end_time - start_time).total_seconds()
+            
+            # Store learning result
+            self.autonomous_skills[learning_id] = {
+                **learning_result,
+                "execution_time": execution_time,
+                "completed_at": end_time.isoformat()
+            }
+            
+            # Record execution history
+            self.execution_history.append({
+                "execution_id": learning_id,
+                "type": "autonomous_skill_learning",
+                "request": request.dict(),
+                "result": learning_result,
+                "timestamp": end_time
+            })
+            
+            logger.info(f"Autonomous skill learning completed: {request.skill_domain}", 
+                       learning_id=learning_id, skills=len(learning_result["skills_acquired"]))
+            
+            return {
+                "learning_id": learning_id,
+                "status": "completed",
+                "skills_acquired": len(learning_result["skills_acquired"]),
+                "execution_time": execution_time,
+                "result": learning_result
+            }
+            
+        except Exception as e:
+            logger.error(f"Autonomous skill learning failed: {e}")
+            self.autonomous_skills[learning_id] = {
+                "learning_id": learning_id,
+                "status": "failed",
+                "error": str(e),
+                "timestamp": end_time.isoformat()
+            }
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    async def safe_mastery_assessment(self, request: SafetyMasteryRequest) -> Dict[str, Any]:
+        """Assess and ensure safe mastery of tasks"""
+        mastery_id = str(uuid.uuid4())
+        start_time = datetime.now()
+        
+        try:
+            # Simulate safety mastery assessment
+            safety_assessment = {
+                "mastery_id": mastery_id,
+                "task_type": request.task_type,
+                "safety_level": request.safety_level,
+                "failure_threshold": request.failure_threshold,
+                "status": "assessing",
+                "safety_score": 0.0,
+                "failure_rate": 0.0,
+                "compliance_checks": [],
+                "risk_assessments": []
+            }
+            
+            # Simulate safety checks
+            compliance_checks = [
+                "catastrophic_failure_prevention",
+                "skill_acquisition_safety", 
+                "energy_threshold_monitoring",
+                "learning_boundaries_adherence"
+            ]
+            
+            for check in compliance_checks:
+                safety_assessment["compliance_checks"].append({
+                    "check": check,
+                    "passed": True,
+                    "score": 0.95 + (hash(check) % 10) / 100.0
+                })
+                await asyncio.sleep(0.05)  # Simulate check time
+            
+            # Calculate safety metrics
+            passed_checks = sum(1 for c in safety_assessment["compliance_checks"] if c["passed"])
+            safety_assessment["safety_score"] = passed_checks / len(compliance_checks) * 100.0
+            safety_assessment["failure_rate"] = max(0.001, (1.0 - safety_assessment["safety_score"] / 100.0) * 0.1)
+            
+            safety_assessment["status"] = "completed"
+            
+            end_time = datetime.now()
+            execution_time = (end_time - start_time).total_seconds()
+            
+            # Store safety assessment
+            self.safety_metrics[mastery_id] = {
+                **safety_assessment,
+                "execution_time": execution_time,
+                "completed_at": end_time.isoformat()
+            }
+            
+            # Record execution history
+            self.execution_history.append({
+                "execution_id": mastery_id,
+                "type": "safe_mastery_assessment",
+                "request": request.dict(),
+                "result": safety_assessment,
+                "timestamp": end_time
+            })
+            
+            logger.info(f"Safety mastery assessment completed: {request.task_type}", 
+                       mastery_id=mastery_id, safety_score=safety_assessment["safety_score"])
+            
+            return {
+                "mastery_id": mastery_id,
+                "status": "completed",
+                "safety_score": safety_assessment["safety_score"],
+                "failure_rate": safety_assessment["failure_rate"],
+                "execution_time": execution_time,
+                "result": safety_assessment
+            }
+            
+        except Exception as e:
+            logger.error(f"Safety mastery assessment failed: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    async def energy_efficiency_monitoring(self, request: EnergyEfficiencyRequest) -> Dict[str, Any]:
+        """Monitor and optimize energy efficiency"""
+        monitoring_id = str(uuid.uuid4())
+        start_time = datetime.now()
+        
+        try:
+            # Simulate energy monitoring
+            energy_profile = {
+                "monitoring_id": monitoring_id,
+                "baseline_comparison": request.baseline_comparison,
+                "optimization_target": request.optimization_target,
+                "consumption_phases": request.consumption_phases,
+                "status": "monitoring",
+                "current_efficiency": 0.0,
+                "energy_consumption": {},
+                "optimization_suggestions": [],
+                "efficiency_score": 0.0
+            }
+            
+            # Simulate energy measurements for each phase
+            for phase in request.consumption_phases:
+                base_consumption = {"learning": 15.0, "inference": 5.0, "idle": 1.0}.get(phase, 10.0)
+                current_consumption = base_consumption * (0.8 + (hash(monitoring_id + phase) % 40) / 100.0)
+                
+                energy_profile["energy_consumption"][phase] = {
+                    "current_watts": current_consumption,
+                    "baseline_watts": base_consumption,
+                    "efficiency_ratio": base_consumption / current_consumption
+                }
+                await asyncio.sleep(0.05)  # Simulate measurement time
+            
+            # Calculate overall efficiency
+            total_efficiency = sum(e["efficiency_ratio"] for e in energy_profile["energy_consumption"].values()) / len(energy_profile["energy_consumption"])
+            energy_profile["current_efficiency"] = total_efficiency * 100.0
+            energy_profile["efficiency_score"] = min(100.0, energy_profile["current_efficiency"])
+            
+            # Generate optimization suggestions
+            if energy_profile["efficiency_score"] < request.optimization_target:
+                energy_profile["optimization_suggestions"] = [
+                    "Reduce learning phase duration",
+                    "Optimize inference algorithms",
+                    "Implement power gating for idle phases",
+                    "Use neuromorphic computing principles"
+                ]
+            
+            energy_profile["status"] = "completed"
+            
+            end_time = datetime.now()
+            execution_time = (end_time - start_time).total_seconds()
+            
+            # Store energy profile
+            self.energy_profiles[monitoring_id] = {
+                **energy_profile,
+                "execution_time": execution_time,
+                "completed_at": end_time.isoformat()
+            }
+            
+            # Record execution history
+            self.execution_history.append({
+                "execution_id": monitoring_id,
+                "type": "energy_efficiency_monitoring",
+                "request": request.dict(),
+                "result": energy_profile,
+                "timestamp": end_time
+            })
+            
+            logger.info(f"Energy efficiency monitoring completed", 
+                       monitoring_id=monitoring_id, efficiency_score=energy_profile["efficiency_score"])
+            
+            return {
+                "monitoring_id": monitoring_id,
+                "status": "completed",
+                "efficiency_score": energy_profile["efficiency_score"],
+                "energy_consumption": energy_profile["energy_consumption"],
+                "optimization_suggestions": energy_profile["optimization_suggestions"],
+                "execution_time": execution_time,
+                "result": energy_profile
+            }
+            
+        except Exception as e:
+            logger.error(f"Energy efficiency monitoring failed: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    def get_capabilities(self) -> List[Dict[str, Any]]:
+        """Get all registered Integral AI capabilities"""
+        return [capability.dict() for capability in self.capabilities]
+    
+    def get_learning_history(self, skill_domain: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Get autonomous learning history"""
+        history = list(self.autonomous_skills.values())
+        if skill_domain:
+            history = [h for h in history if h.get("skill_domain") == skill_domain]
+        return sorted(history, key=lambda x: x.get("timestamp", ""), reverse=True)
+    
+    def get_safety_history(self, task_type: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Get safety mastery history"""
+        history = list(self.safety_metrics.values())
+        if task_type:
+            history = [h for h in history if h.get("task_type") == task_type]
+        return sorted(history, key=lambda x: x.get("timestamp", ""), reverse=True)
+    
+    def get_energy_history(self) -> List[Dict[str, Any]]:
+        """Get energy efficiency history"""
+        return sorted(self.energy_profiles.values(), key=lambda x: x.get("timestamp", ""), reverse=True)
+    
+    def get_integral_ai_metrics(self) -> Dict[str, Any]:
+        """Get comprehensive Integral AI metrics"""
+        # Calculate aggregate metrics
+        if self.autonomous_skills:
+            avg_skills_acquired = sum(len(h.get("skills_acquired", [])) for h in self.autonomous_skills.values()) / len(self.autonomous_skills)
+            successful_learning = len([h for h in self.autonomous_skills.values() if h.get("status") == "completed"])
+        else:
+            avg_skills_acquired = 0.0
+            successful_learning = 0
+        
+        if self.safety_metrics:
+            avg_safety_score = sum(h.get("safety_score", 0.0) for h in self.safety_metrics.values()) / len(self.safety_metrics)
+            avg_failure_rate = sum(h.get("failure_rate", 0.0) for h in self.safety_metrics.values()) / len(self.safety_metrics)
+        else:
+            avg_safety_score = 0.0
+            avg_failure_rate = 0.0
+        
+        if self.energy_profiles:
+            avg_efficiency = sum(h.get("efficiency_score", 0.0) for h in self.energy_profiles.values()) / len(self.energy_profiles)
+        else:
+            avg_efficiency = 0.0
+        
+        return {
+            "autonomous_skill_learning": {
+                "total_sessions": len(self.autonomous_skills),
+                "successful_sessions": successful_learning,
+                "avg_skills_acquired": avg_skills_acquired,
+                "success_rate": successful_learning / max(1, len(self.autonomous_skills))
+            },
+            "safe_mastery": {
+                "total_assessments": len(self.safety_metrics),
+                "avg_safety_score": avg_safety_score,
+                "avg_failure_rate": avg_failure_rate,
+                "compliance_rate": (100.0 - avg_failure_rate * 100.0) / 100.0
+            },
+            "energy_efficiency": {
+                "total_monitoring_sessions": len(self.energy_profiles),
+                "avg_efficiency_score": avg_efficiency,
+                "energy_profiles": list(self.energy_profiles.keys())
+            },
+            "overall": {
+                "capabilities_registered": len(self.capabilities),
+                "total_executions": len(self.execution_history),
+                "integral_ai_status": "active" if avg_safety_score > 80 and avg_efficiency > 70 else "needs_optimization"
+            }
+        }
+
 # Initialize managers
 model_manager = ModelManager()
 agent_manager = AgentManager(model_manager)
 workflow_manager = WorkflowManager(model_manager, agent_manager)
 plugin_manager = PluginManager(model_manager, agent_manager, workflow_manager)
+integral_ai_manager = IntegralAIManager()
+
+# Register default Integral AI capabilities
+default_capabilities = [
+    IntegralAICapability(
+        id="autonomous-skill-learning-v1",
+        name="Autonomous Skill Learning System",
+        description="Advanced system for autonomous skill acquisition across multiple domains",
+        category="autonomous-learning",
+        implementation={
+            "universalSimulators": True,
+            "universalOperators": True,
+            "genesisStream": True,
+            "visionIntegration": True,
+            "audioIntegration": True,
+            "sensorIntegration": True
+        },
+        metrics={
+            "autonomousSkillAcquisition": 85.0,
+            "failureRate": 0.02,
+            "energyEfficiency": 0.75,
+            "neocortexFidelity": 0.80
+        },
+        status="active"
+    ),
+    IntegralAICapability(
+        id="safe-mastery-v1",
+        name="Safe and Reliable Mastery System",
+        description="Comprehensive safety framework ensuring reliable task execution",
+        category="safety-reliability",
+        implementation={
+            "universalSimulators": True,
+            "universalOperators": True,
+            "genesisStream": True,
+            "visionIntegration": True,
+            "audioIntegration": True,
+            "sensorIntegration": True
+        },
+        metrics={
+            "autonomousSkillAcquisition": 0.0,
+            "failureRate": 0.01,
+            "energyEfficiency": 0.90,
+            "neocortexFidelity": 0.85
+        },
+        status="active"
+    ),
+    IntegralAICapability(
+        id="energy-efficiency-v1",
+        name="Energy Efficiency Optimization",
+        description="Bio-inspired energy-efficient computing with human brain comparison",
+        category="energy-efficiency",
+        implementation={
+            "universalSimulators": True,
+            "universalOperators": True,
+            "genesisStream": True,
+            "visionIntegration": True,
+            "audioIntegration": True,
+            "sensorIntegration": True
+        },
+        metrics={
+            "autonomousSkillAcquisition": 0.0,
+            "failureRate": 0.005,
+            "energyEfficiency": 0.95,
+            "neocortexFidelity": 0.75
+        },
+        status="active"
+    ),
+    IntegralAICapability(
+        id="neocortex-mimicry-v1",
+        name="Neocortex Mimicry System",
+        description="Advanced neural architecture simulating human neocortex functionality",
+        category="neocortex-mimicry",
+        implementation={
+            "universalSimulators": True,
+            "universalOperators": True,
+            "genesisStream": True,
+            "visionIntegration": True,
+            "audioIntegration": True,
+            "sensorIntegration": True
+        },
+        metrics={
+            "autonomousSkillAcquisition": 90.0,
+            "failureRate": 0.015,
+            "energyEfficiency": 0.70,
+            "neocortexFidelity": 0.95
+        },
+        status="experimental"
+    )
+]
+
+for capability in default_capabilities:
+    integral_ai_manager.register_capability(capability)
 
 # Pre-configured models
 DEFAULT_MODELS = [
@@ -1104,12 +1560,23 @@ app.add_middleware(
 @app.get("/")
 async def root():
     """Root endpoint"""
+    integral_ai_status = "active" if len(integral_ai_manager.capabilities) > 0 else "inactive"
+    
     return {
         "message": "Google ADK Agent Platform API",
         "version": "1.0.0",
         "status": "running",
         "models_available": len(model_manager.model_configs),
-        "agents_created": len(agent_manager.agents)
+        "agents_created": len(agent_manager.agents),
+        "workflows_created": len(workflow_manager.workflows),
+        "plugins_installed": len(plugin_manager.plugins),
+        "integral_ai": {
+            "status": integral_ai_status,
+            "capabilities_registered": len(integral_ai_manager.capabilities),
+            "autonomous_learning": len(integral_ai_manager.autonomous_skills),
+            "safety_assessments": len(integral_ai_manager.safety_metrics),
+            "energy_monitoring": len(integral_ai_manager.energy_profiles)
+        }
     }
 
 @app.get("/health")
@@ -1514,6 +1981,121 @@ async def install_plugin(request: PluginInstallRequest):
         logger.error(f"Error installing plugin: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Integral AI Management APIs
+@app.get("/integral-ai/capabilities")
+async def get_integral_ai_capabilities():
+    """Get all registered Integral AI capabilities"""
+    try:
+        capabilities = integral_ai_manager.get_capabilities()
+        return {"capabilities": capabilities, "total": len(capabilities)}
+    except Exception as e:
+        logger.error(f"Error getting Integral AI capabilities: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/integral-ai/autonomous-learning")
+async def start_autonomous_skill_learning(request: AutonomousLearningRequest):
+    """Start autonomous skill learning session"""
+    try:
+        result = await integral_ai_manager.autonomous_skill_learning(request)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error starting autonomous skill learning: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/integral-ai/autonomous-learning/history")
+async def get_autonomous_learning_history(skill_domain: Optional[str] = None):
+    """Get autonomous learning history"""
+    try:
+        history = integral_ai_manager.get_learning_history(skill_domain)
+        return {"history": history, "total": len(history)}
+    except Exception as e:
+        logger.error(f"Error getting learning history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/integral-ai/safe-mastery")
+async def assess_safe_mastery(request: SafetyMasteryRequest):
+    """Assess safe mastery of tasks"""
+    try:
+        result = await integral_ai_manager.safe_mastery_assessment(request)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error assessing safe mastery: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/integral-ai/safe-mastery/history")
+async def get_safe_mastery_history(task_type: Optional[str] = None):
+    """Get safety mastery history"""
+    try:
+        history = integral_ai_manager.get_safety_history(task_type)
+        return {"history": history, "total": len(history)}
+    except Exception as e:
+        logger.error(f"Error getting safety history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/integral-ai/energy-efficiency")
+async def monitor_energy_efficiency(request: EnergyEfficiencyRequest):
+    """Monitor and optimize energy efficiency"""
+    try:
+        result = await integral_ai_manager.energy_efficiency_monitoring(request)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error monitoring energy efficiency: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/integral-ai/energy-efficiency/history")
+async def get_energy_efficiency_history():
+    """Get energy efficiency monitoring history"""
+    try:
+        history = integral_ai_manager.get_energy_history()
+        return {"history": history, "total": len(history)}
+    except Exception as e:
+        logger.error(f"Error getting energy history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/integral-ai/metrics")
+async def get_integral_ai_metrics():
+    """Get comprehensive Integral AI metrics"""
+    try:
+        metrics = integral_ai_manager.get_integral_ai_metrics()
+        return metrics
+    except Exception as e:
+        logger.error(f"Error getting Integral AI metrics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/integral-ai/status")
+async def get_integral_ai_status():
+    """Get current Integral AI system status"""
+    try:
+        capabilities = integral_ai_manager.get_capabilities()
+        metrics = integral_ai_manager.get_integral_ai_metrics()
+        
+        # Determine overall status
+        active_capabilities = [c for c in capabilities if c["status"] == "active"]
+        experimental_capabilities = [c for c in capabilities if c["status"] == "experimental"]
+        
+        status_summary = {
+            "overall_status": metrics["overall"]["integral_ai_status"],
+            "active_capabilities": len(active_capabilities),
+            "experimental_capabilities": len(experimental_capabilities),
+            "total_executions": metrics["overall"]["total_executions"],
+            "autonomous_learning_active": metrics["autonomous_skill_learning"]["success_rate"] > 0.8,
+            "safety_mastery_active": metrics["safe_mastery"]["compliance_rate"] > 0.95,
+            "energy_efficiency_active": metrics["energy_efficiency"]["avg_efficiency_score"] > 70.0,
+            "neocortex_mimicry_active": len([c for c in capabilities if c["category"] == "neocortex-mimicry" and c["status"] == "active"]) > 0,
+            "last_updated": datetime.now().isoformat()
+        }
+        
+        return status_summary
+    except Exception as e:
+        logger.error(f"Error getting Integral AI status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Performance monitoring
 @app.get("/metrics")
 async def get_metrics():
@@ -1535,6 +2117,7 @@ async def get_metrics():
             "total_executions": len(plugin_manager.execution_history),
             "marketplace": len(plugin_manager.plugin_marketplace)
         },
+        "integral_ai": integral_ai_manager.get_integral_ai_metrics(),
         "system": {
             "cpu_percent": psutil.cpu_percent(),
             "memory_percent": psutil.virtual_memory().percent,
