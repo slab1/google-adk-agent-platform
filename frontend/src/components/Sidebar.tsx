@@ -8,7 +8,9 @@ import {
   Settings, 
   ChevronLeft,
   ChevronRight,
-  Zap
+  Zap,
+  Package,
+  GitBranch
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -34,6 +36,18 @@ const navigationItems = [
     path: '/models',
     icon: Cpu,
     description: 'Manage AI models'
+  },
+  {
+    name: 'Plugins',
+    path: '/plugins',
+    icon: Package,
+    description: 'Plugin marketplace'
+  },
+  {
+    name: 'Templates',
+    path: '/templates',
+    icon: GitBranch,
+    description: 'Workflow templates'
   },
   {
     name: 'Chat',

@@ -7,6 +7,8 @@ import AgentBuilder from './pages/AgentBuilder'
 import ModelManager from './pages/ModelManager'
 import ChatInterface from './pages/ChatInterface'
 import Settings from './pages/Settings'
+import PluginMarketplace from './pages/PluginMarketplace'
+import TemplateGallery from './pages/TemplateGallery'
 import { useStore } from './store'
 
 function App() {
@@ -36,6 +38,8 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/builder" element={<AgentBuilder />} />
               <Route path="/models" element={<ModelManager />} />
+              <Route path="/plugins" element={<PluginMarketplace />} />
+              <Route path="/templates" element={<TemplateGallery />} />
               <Route path="/chat/:agentId?" element={<ChatInterface />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>
