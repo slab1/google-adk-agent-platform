@@ -291,7 +291,7 @@ const TemplateGallery: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 1500))
       
       // In a real implementation, this would navigate to the builder with the template
-      console.log('Loading template:', template.name)
+      // TODO: Implement navigation to builder with template
       
     } catch (error) {
       console.error('Failed to load template:', error)
@@ -301,16 +301,16 @@ const TemplateGallery: React.FC = () => {
   }
 
   const duplicateTemplate = async (templateId: string) => {
-    console.log('Duplicating template:', templateId)
-    // Simulate duplication
+    // Simulate template duplication
+    // TODO: Implement template duplication
   }
 
   const deleteTemplate = async (templateId: string) => {
     if (!confirm('Are you sure you want to delete this template?')) {
       return
     }
-    console.log('Deleting template:', templateId)
-    // Simulate deletion
+    // Simulate template deletion
+    // TODO: Implement template deletion
   }
 
   const previewTemplate = (template: WorkflowTemplate) => {
