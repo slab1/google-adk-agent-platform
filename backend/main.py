@@ -38,6 +38,205 @@ structlog.configure(
 
 logger = structlog.get_logger(__name__)
 
+# Workflow Management
+@dataclass
+class WorkflowConfig:
+    """Configuration for ADK workflows"""
+    id: str
+    name: str
+    description: str
+    status: str = "draft"  # "draft", "active", "paused", "error"
+    created_at: datetime = None
+    updated_at: datetime = None
+    nodes: List[WorkflowNode] = None
+    connections: List[WorkflowConnection] = None
+    execution_history: List[Dict[str, Any]] = None
+    
+    def __post_init__(self):
+        if self.created_at is None:
+            self.created_at = datetime.now()
+        if self.updated_at is None:
+            self.updated_at = datetime.now()
+        if self.nodes is None:
+            self.nodes = []
+        if self.connections is None:
+            self.connections = []
+        if self.execution_history is None:
+            self.execution_history = []
+
+class WorkflowManager:
+    """Manages ADK workflow configurations and executions"""
+    
+    def __init__(self, model_manager: ModelManager, agent_manager: AgentManager):
+        self.model_manager = model_manager
+        self.agent_manager = agent_manager
+        self.workflows: Dict[str, WorkflowConfig] = {}
+        self.execution_queue: List[Dict[str, Any]] = []
+        self.execution_results: Dict[str, Dict[str, Any]] = {}
+        
+    def create_workflow(self, request: WorkflowCreateRequest) -> WorkflowConfig:
+        """Create a new workflow"""
+        try:
+            workflow_config = WorkflowConfig(
+                id=str(uuid.uuid4()),
+                name=request.name,
+                description=request.description,
+                nodes=request.nodes,
+                connections=request.connections
+            )
+            
+            self.workflows[workflow_config.id] = workflow_config
+            
+            logger.info(f"Created workflow: {workflow_config.name}", 
+                       workflow_id=workflow_config.id)
+            
+            return workflow_config
+            
+        except Exception as e:
+            logger.error(f"Failed to create workflow: {e}")
+            raise HTTPException(status_code=400, detail=str(e))
+    
+    def list_workflows(self) -> List[Dict[str, Any]]:
+        """List all workflows"""
+        return [asdict(workflow) for workflow in self.workflows.values()]
+    
+    def get_workflow(self, workflow_id: str) -> Optional[WorkflowConfig]:
+        """Get workflow by ID"""
+        return self.workflows.get(workflow_id)
+    
+    def update_workflow(self, workflow_id: str, request: WorkflowCreateRequest) -> WorkflowConfig:
+        """Update an existing workflow"""
+        workflow = self.get_workflow(workflow_id)
+        if not workflow:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+        
+        workflow.name = request.name
+        workflow.description = request.description
+        workflow.nodes = request.nodes
+        workflow.connections = request.connections
+        workflow.updated_at = datetime.now()
+        
+        logger.info(f"Updated workflow: {workflow.name}", workflow_id=workflow_id)
+        return workflow
+    
+    def delete_workflow(self, workflow_id: str) -> bool:
+        """Delete a workflow"""
+        if workflow_id in self.workflows:
+            workflow = self.workflows[workflow_id]
+            del self.workflows[workflow_id]
+            logger.info(f"Deleted workflow: {workflow.name}", workflow_id=workflow_id)
+            return True
+        return False
+    
+    async def execute_workflow(self, workflow_id: str, input_data: Dict[str, Any] = {}) -> Dict[str, Any]:
+        """Execute a workflow"""
+        workflow = self.get_workflow(workflow_id)
+        if not workflow:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+        
+        if workflow.status != "active":
+            raise HTTPException(status_code=400, detail="Workflow is not active")
+        
+        execution_id = str(uuid.uuid4())
+        execution_start = datetime.now()
+        
+        # Add to execution queue
+        execution_record = {
+            "execution_id": execution_id,
+            "workflow_id": workflow_id,
+            "status": "running",
+            "start_time": execution_start,
+            "input_data": input_data
+        }
+        
+        workflow.execution_history.append(execution_record)
+        
+        try:
+            # Simulate workflow execution
+            # In a real implementation, this would traverse the workflow graph
+            # and execute each node based on its type
+            
+            # Mock execution for demo purposes
+            result = await self._simulate_workflow_execution(workflow, input_data)
+            
+            execution_end = datetime.now()
+            execution_time = (execution_end - execution_start).total_seconds()
+            
+            # Update execution record
+            execution_record.update({
+                "status": "completed",
+                "end_time": execution_end,
+                "execution_time": execution_time,
+                "result": result
+            })
+            
+            # Store execution result
+            self.execution_results[execution_id] = {
+                "workflow_id": workflow_id,
+                "result": result,
+                "execution_time": execution_time,
+                "completed_at": execution_end.isoformat()
+            }
+            
+            logger.info(f"Workflow execution completed: {workflow.name}", 
+                       workflow_id=workflow_id, execution_id=execution_id)
+            
+            return {
+                "execution_id": execution_id,
+                "workflow_id": workflow_id,
+                "status": "completed",
+                "result": result,
+                "execution_time": execution_time
+            }
+            
+        except Exception as e:
+            execution_end = datetime.now()
+            
+            # Update execution record with error
+            execution_record.update({
+                "status": "failed",
+                "end_time": execution_end,
+                "error": str(e)
+            })
+            
+            logger.error(f"Workflow execution failed: {workflow.name}", 
+                        workflow_id=workflow_id, error=str(e))
+            
+            raise HTTPException(status_code=500, detail=f"Execution failed: {str(e)}")
+    
+    async def _simulate_workflow_execution(self, workflow: WorkflowConfig, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Simulate workflow execution for demo purposes"""
+        # Simulate processing time
+        await asyncio.sleep(2)
+        
+        # Mock result based on workflow nodes
+        node_count = len(workflow.nodes)
+        connection_count = len(workflow.connections)
+        
+        return {
+            "processed_nodes": node_count,
+            "connections_executed": connection_count,
+            "output": f"Workflow '{workflow.name}' executed successfully with {node_count} nodes",
+            "input_received": input_data,
+            "execution_summary": {
+                "total_nodes": node_count,
+                "total_connections": connection_count,
+                "workflow_type": "visual_builder"
+            }
+        }
+    
+    def get_execution_history(self, workflow_id: str) -> List[Dict[str, Any]]:
+        """Get execution history for a workflow"""
+        workflow = self.get_workflow(workflow_id)
+        if not workflow:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+        
+        return workflow.execution_history
+    
+    def get_execution_result(self, execution_id: str) -> Optional[Dict[str, Any]]:
+        """Get execution result by execution ID"""
+        return self.execution_results.get(execution_id)
+
 # Model Integration Imports
 try:
     import litellm
@@ -117,6 +316,28 @@ class AgentCreateRequest(BaseModel):
 class ModelTestRequest(BaseModel):
     model_config: Dict[str, Any]
     test_prompt: str
+
+class WorkflowNode(BaseModel):
+    id: str
+    type: str
+    position: Dict[str, float]
+    data: Dict[str, Any]
+    connections: List[str] = []
+
+class WorkflowConnection(BaseModel):
+    id: str
+    sourceId: str
+    targetId: str
+
+class WorkflowCreateRequest(BaseModel):
+    name: str
+    description: str
+    nodes: List[WorkflowNode]
+    connections: List[WorkflowConnection]
+
+class WorkflowExecutionRequest(BaseModel):
+    workflow_id: str
+    input_data: Dict[str, Any] = {}
 
 # Model Manager
 class ModelManager:
@@ -366,6 +587,7 @@ class AgentManager:
 # Initialize managers
 model_manager = ModelManager()
 agent_manager = AgentManager(model_manager)
+workflow_manager = WorkflowManager(model_manager, agent_manager)
 
 # Pre-configured models
 DEFAULT_MODELS = [
@@ -622,6 +844,94 @@ async def websocket_chat(websocket: WebSocket, agent_id: str):
         logger.error(f"WebSocket error for agent {agent_id}: {e}")
         await websocket.close()
 
+# Workflow Management APIs
+@app.get("/workflows")
+async def list_workflows():
+    """List all workflows"""
+    return {
+        "workflows": workflow_manager.list_workflows(),
+        "total": len(workflow_manager.workflows)
+    }
+
+@app.post("/workflows")
+async def create_workflow(request: WorkflowCreateRequest):
+    """Create a new workflow"""
+    workflow = workflow_manager.create_workflow(request)
+    return asdict(workflow)
+
+@app.get("/workflows/{workflow_id}")
+async def get_workflow(workflow_id: str):
+    """Get workflow by ID"""
+    workflow = workflow_manager.get_workflow(workflow_id)
+    if not workflow:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+    return asdict(workflow)
+
+@app.put("/workflows/{workflow_id}")
+async def update_workflow(workflow_id: str, request: WorkflowCreateRequest):
+    """Update an existing workflow"""
+    workflow = workflow_manager.update_workflow(workflow_id, request)
+    return asdict(workflow)
+
+@app.delete("/workflows/{workflow_id}")
+async def delete_workflow(workflow_id: str):
+    """Delete a workflow"""
+    success = workflow_manager.delete_workflow(workflow_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+    return {"message": "Workflow deleted successfully"}
+
+@app.post("/workflows/{workflow_id}/execute")
+async def execute_workflow(workflow_id: str, request: WorkflowExecutionRequest):
+    """Execute a workflow"""
+    try:
+        result = await workflow_manager.execute_workflow(workflow_id, request.input_data)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Workflow execution error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/workflows/{workflow_id}/history")
+async def get_workflow_history(workflow_id: str):
+    """Get execution history for a workflow"""
+    try:
+        history = workflow_manager.get_execution_history(workflow_id)
+        return {"history": history}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting workflow history: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/executions/{execution_id}")
+async def get_execution_result(execution_id: str):
+    """Get execution result by execution ID"""
+    result = workflow_manager.get_execution_result(execution_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Execution not found")
+    return result
+
+@app.get("/workflows/{workflow_id}/status")
+async def get_workflow_status(workflow_id: str):
+    """Get workflow status and summary"""
+    workflow = workflow_manager.get_workflow(workflow_id)
+    if not workflow:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+    
+    recent_executions = workflow.execution_history[-5:] if workflow.execution_history else []
+    
+    return {
+        "workflow_id": workflow_id,
+        "status": workflow.status,
+        "node_count": len(workflow.nodes),
+        "connection_count": len(workflow.connections),
+        "execution_count": len(workflow.execution_history),
+        "recent_executions": recent_executions,
+        "last_execution": recent_executions[-1] if recent_executions else None
+    }
+
 # Performance monitoring
 @app.get("/metrics")
 async def get_metrics():
@@ -631,6 +941,11 @@ async def get_metrics():
         "agents": {
             "total": len(agent_manager.agents),
             "active_conversations": len(agent_manager.active_conversations)
+        },
+        "workflows": {
+            "total": len(workflow_manager.workflows),
+            "active": len([w for w in workflow_manager.workflows.values() if w.status == "active"]),
+            "total_executions": sum(len(w.execution_history) for w in workflow_manager.workflows.values())
         },
         "system": {
             "cpu_percent": psutil.cpu_percent(),
